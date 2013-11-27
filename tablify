@@ -1,0 +1,81 @@
+#!/usr/bin/env php 
+<?php
+$opts = getopt('f:d:H');
+$usage = <<<USAGE
+
+tablify -f <file> -d <delimeter:","> -H
+
+USAGE;
+
+
+
+
+function make_string($char, $length) {
+    return implode('', array_fill(0, $length, $char));
+}
+function println($line) {
+    echo $line."\n";
+}
+
+function parseInput($file, $delimeter) {
+    $max_chars = [];
+    $data = [];
+    $contents = file_get_contents($file);
+    $lines = explode("\n", $contents);
+    foreach ($lines as $num => $line) {
+        if (trim($line) == '') continue;
+        $line_data = explode($delimeter, $line);
+        foreach ($line_data as $col_num => $col_data) {
+            $length = strlen( (string) $col_data);
+            $max_chars[$col_num] = max($max_chars[$col_num], $length);
+        }
+        $data[$num] = $line_data;
+    }
+    return [$max_chars, $data];
+}
+
+try {
+    if (empty($opts['f'])) {
+        throw new InvalidArgumentException('You must provide a file');
+    }
+    $file = $opts['f'];
+    if (!file_exists($file) || !is_readable($file)) {
+        throw new InvalidArgumentException("Path '$file' does not point to a readable file.");
+    }
+
+    $include_header = isset($opts['H']);
+    $delimeter = isset($opts['d']) ? $opts['d'] : ',';
+
+    list($max_chars, $data) = parseInput($file, $delimeter);
+
+    // Create a for seperation lines, should be in the format:
+    // +-------------+-----------+---------------------------+
+    // For each column
+    $seps = [];
+    foreach ($max_chars as $num) {
+        $seps[] = make_string('-', $num+2);
+    }
+    $sep_line = '+' . implode('+', $seps) . '+';
+    println($sep_line);
+
+    foreach ($data as $num => $row) {
+        $prints = [];
+        $i = 0;
+        while ($i < count($max_chars)) {
+            $col = $row[$i];
+            $prints[] = ' ' .str_pad($col, $max_chars[$i], ' ', STR_PAD_RIGHT) . ' ';
+
+            $i++;
+        }
+        println('|' . implode('|', $prints) . '|');
+        if ($num == 0 && $include_header) {
+            println($sep_line);
+        }
+    }
+    println($sep_line);
+
+} catch (Exception $e) {
+    echo "ERROR: ".$e->getMessage()."\n";
+    echo $usage;
+    exit(1);
+}
