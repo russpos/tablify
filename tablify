@@ -7,9 +7,6 @@ tablify -f <file> -d <delimeter:","> -H
 
 USAGE;
 
-
-
-
 function make_string($char, $length) {
     return implode('', array_fill(0, $length, $char));
 }
